@@ -1,6 +1,6 @@
+#include "chip8.h"
 #include <string.h>
 #include <iostream>
-#include "chip8.h"
 
 typedef unsigned char byte;   // 0-255
 typedef unsigned short word;  // 0-65535
@@ -36,6 +36,7 @@ void chip8::initialize() {
     memset(registers, 0, sizeof(registers));
     memset(stack, 0, sizeof(stack));
     memset(memory, 0, sizeof(memory));
+    memset(display, 0, sizeof(display));
 
     // load the fontset
     for (int i = 0; i < 80; i++) {
@@ -60,8 +61,6 @@ bool chip8::load_rom(const char* filename) {
     long rom_size = ftell(rom);
     rewind(rom);
 
-    // TODO: memory error
-
     // rom is loaded into 0x200 and onwards as 0x000-0x1FF is for the interpreter
     fread(&memory[0x200], 1, rom_size, rom);
     fclose(rom);
@@ -83,12 +82,24 @@ void chip8::emulate_cycle() {
                     pc += 2;
                     break;
 
+                case 0x000E:  // 0x00EE: returns from subroutine
+                    --sp;
+                    pc = stack[sp];
+                    pc += 2;
+                    break;
+
                 default:
                     std::cout << "unknown opcode\n";
             }
             break;
 
         case 0x1000:  // 0x1NNN: jumps to address NNN
+            pc = opcode & 0x0FFF;
+            break;
+
+        case 0x2000:
+            stack[sp] = pc;
+            ++sp;
             pc = opcode & 0x0FFF;
             break;
 
@@ -107,6 +118,34 @@ void chip8::emulate_cycle() {
             pc += 2;
             break;
 
+        case 0xD000: {  // DXYN: draw at coordinate x, y with height N
+            word x = registers[(opcode & 0x0F00) >> 8] % 64;
+            word y = registers[(opcode & 0x00F0) >> 4] % 32;
+            word height = opcode & 0x000F;
+            word pixel;
+
+            registers[0xF] = 0;
+
+            for (int j = 0; j < height; j++) {
+                pixel = memory[I + j];
+                for (int i = 0; i < 8; i++) {
+                    if ((pixel & (0x80 >> i)) != 0) {
+                        int current_x = (x + i) % 64;
+                        int current_y = (y + j) % 32;
+                        int pos = current_x + (current_y * 64);
+
+                        if (display[pos] == 1) {
+                            registers[0xF] = 1;
+                        }
+                        display[pos] ^= 1;
+                    }
+                }
+            }
+
+            draw_flag = true;
+            pc += 2;
+            break;
+        }
         default:
             std::cout << "unknown opcode: " << opcode << "\n";
     }
@@ -121,4 +160,17 @@ void chip8::emulate_cycle() {
         }
         --sound_timer;
     }
+}
+
+void chip8::terminal_render() {
+    for (int y = 0; y < 32; ++y) {
+        for (int x = 0; x < 64; ++x) {
+            if (display[(y * 64) + x] == 1)
+                std::cout << "█";
+            else
+                std::cout << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
 }

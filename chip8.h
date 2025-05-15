@@ -23,5 +23,6 @@ class chip8 {
     void initialize();
     bool load_rom(const char* filename);
     void emulate_cycle();
+    void terminal_render();
     ~chip8();
 };
