@@ -127,7 +127,7 @@ void chip8::emulate_cycle() {
             word x = registers[(opcode & 0x0F00) >> 8];
             word y = registers[(opcode & 0x00F0) >> 4];
             word height = opcode & 0x000F;
-            word pixel;
+            byte pixel;
 
             registers[0xF] = 0;
 
@@ -135,8 +135,8 @@ void chip8::emulate_cycle() {
                 pixel = memory[I + j];
                 for (int i = 0; i < 8; i++) {
                     if ((pixel & (0x80 >> i)) != 0) {
-                        int curx = (x + i);
-                        int cury = (y + j);
+                        int curx = (x + i) % 64;
+                        int cury = (y + j) % 32;
                         int pos = curx + (cury * 64);
 
                         if (display[pos] == 1) {
