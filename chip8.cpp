@@ -1,7 +1,6 @@
-// clang-format off
-#include "chip8.h"
 #include <string.h>
 #include <iostream>
+#include "chip8.h"
 
 typedef unsigned char byte;   // 0-255
 typedef unsigned short word;  // 0-65535
@@ -25,8 +24,6 @@ byte fontset[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80   // F
 };
 
-// clang-format on
-
 chip8::chip8() {};
 chip8::~chip8() {};
 
@@ -44,6 +41,8 @@ void chip8::initialize() {
     for (int i = 0; i < 80; i++) {
         memory[i + 0x050] = fontset[i];
     }
+
+    draw_flag = true;
 
     delay_timer = 0;
     sound_timer = 0;
@@ -76,12 +75,37 @@ void chip8::emulate_cycle() {
 
     // decode
     switch (opcode & 0xF000) {
-        case 0xA000:
-            I = opcode & 0xFFF;
+        case 0x0000:
+            switch (opcode & 0x000F) {
+                case 0x0000:  // 0x00E0: clears the screen
+                    for (int i = 0; i < 2048; ++i) display[i] = 0x0;
+                    draw_flag = true;
+                    pc += 2;
+                    break;
+
+                default:
+                    std::cout << "unknown opcode\n";
+            }
+            break;
+
+        case 0x1000:  // 0x1NNN: jumps to address NNN
+            pc = opcode & 0x0FFF;
+            break;
+
+        case 0x6000:  // 0x6XNN: sets VX to NN
+            registers[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
             pc += 2;
             break;
-        
-        
+
+        case 0x7000:  // 0x7XNN: adds NN to VX
+            registers[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
+            pc += 2;
+            break;
+
+        case 0xA000:  // ANNN: sets I to the address NNN
+            I = opcode & 0x0FFF;
+            pc += 2;
+            break;
 
         default:
             std::cout << "unknown opcode: " << opcode << "\n";

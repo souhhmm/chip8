@@ -17,6 +17,8 @@ class chip8 {
     byte display[64 * 32];
     byte key[16];
 
+    bool draw_flag;
+
     chip8();
     void initialize();
     bool load_rom(const char* filename);
