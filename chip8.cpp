@@ -1,6 +1,7 @@
 #include "chip8.h"
 #include <string.h>
 #include <iostream>
+#include <time.h>
 
 typedef unsigned char byte;   // 0-255
 typedef unsigned short word;  // 0-65535
@@ -47,6 +48,8 @@ void chip8::initialize() {
 
     delay_timer = 0;
     sound_timer = 0;
+
+    srand(time(NULL));
 }
 
 bool chip8::load_rom(const char* filename) {
@@ -60,6 +63,8 @@ bool chip8::load_rom(const char* filename) {
     fseek(rom, 0, SEEK_END);
     long rom_size = ftell(rom);
     rewind(rom);
+
+    std::cout << "file size: " << rom_size << "\n";
 
     // rom is loaded into 0x200 and onwards as 0x000-0x1FF is for the interpreter
     fread(&memory[0x200], 1, rom_size, rom);
@@ -119,8 +124,8 @@ void chip8::emulate_cycle() {
             break;
 
         case 0xD000: {  // DXYN: draw at coordinate x, y with height N
-            word x = registers[(opcode & 0x0F00) >> 8] % 64;
-            word y = registers[(opcode & 0x00F0) >> 4] % 32;
+            word x = registers[(opcode & 0x0F00) >> 8];
+            word y = registers[(opcode & 0x00F0) >> 4];
             word height = opcode & 0x000F;
             word pixel;
 
@@ -130,9 +135,9 @@ void chip8::emulate_cycle() {
                 pixel = memory[I + j];
                 for (int i = 0; i < 8; i++) {
                     if ((pixel & (0x80 >> i)) != 0) {
-                        int current_x = (x + i) % 64;
-                        int current_y = (y + j) % 32;
-                        int pos = current_x + (current_y * 64);
+                        int curx = (x + i);
+                        int cury = (y + j);
+                        int pos = curx + (cury * 64);
 
                         if (display[pos] == 1) {
                             registers[0xF] = 1;
@@ -144,8 +149,8 @@ void chip8::emulate_cycle() {
 
             draw_flag = true;
             pc += 2;
-            break;
-        }
+        } break;
+
         default:
             std::cout << "unknown opcode: " << opcode << "\n";
     }
