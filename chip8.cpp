@@ -40,8 +40,9 @@ void chip8::initialize() {
     memset(stack, 0, sizeof(stack));
     memset(memory, 0, sizeof(memory));
 
+    // load the fontset
     for (int i = 0; i < 80; i++) {
-        memory[i] = fontset[i];
+        memory[i + 0x050] = fontset[i];
     }
 
     delay_timer = 0;
@@ -70,9 +71,30 @@ bool chip8::load_rom(const char* filename) {
 }
 
 void chip8::emulate_cycle() {
+    // fetch
     opcode = memory[pc] << 8 | memory[pc + 1];
+
+    // decode
     switch (opcode & 0xF000) {
+        case 0xA000:
+            I = opcode & 0xFFF;
+            pc += 2;
+            break;
+        
+        
+
         default:
             std::cout << "unknown opcode: " << opcode << "\n";
+    }
+
+    if (delay_timer > 0) {
+        --delay_timer;
+    }
+
+    if (sound_timer > 0) {
+        if (sound_timer == 1) {
+            std::cout << "beep" << "\n";
+        }
+        --sound_timer;
     }
 }
