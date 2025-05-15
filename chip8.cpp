@@ -1,5 +1,6 @@
+// clang-format off
 #include "chip8.h"
-
+#include <string.h>
 #include <iostream>
 
 typedef unsigned char byte;   // 0-255
@@ -23,6 +24,8 @@ byte fontset[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0xF0,  // E
     0xF0, 0x80, 0xF0, 0x80, 0x80   // F
 };
+
+// clang-format on
 
 chip8::chip8() {};
 chip8::~chip8() {};
@@ -69,7 +72,6 @@ bool chip8::load_rom(const char* filename) {
 void chip8::emulate_cycle() {
     opcode = memory[pc] << 8 | memory[pc + 1];
     switch (opcode & 0xF000) {
-        
         default:
             std::cout << "unknown opcode: " << opcode << "\n";
     }

@@ -1,6 +1,5 @@
-#include <string.h>
-
 #include <iostream>
+
 typedef unsigned char byte;   // 0-255
 typedef unsigned short word;  // 0-65535
 
